@@ -14,7 +14,7 @@ func Day4(part int) int {
 	}
 	conditionFunc := getConditionFunc(part)
 
-	scanner := utils.ReadDataLineByLine("day4/input")
+	scanner := utils.ReadDataLineByLine("2022/day4/input")
 	nOverlap := 0
 	for scanner.Scan() {
 		line := scanner.Text()
