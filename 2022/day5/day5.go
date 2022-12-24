@@ -3,12 +3,13 @@ package day5
 import (
 	"AoC22/utils"
 	"fmt"
+	"log"
 	"regexp"
 	"strconv"
 	"strings"
 )
 
-func Part1() string {
+func Day5(crateMoverModel int) string {
 	fileContent := utils.ReadEntireFile("2022/day5/input")
 	input := strings.Split(fileContent, "\n\n")
 	gridString, instructionsString := input[0], input[1]
@@ -17,9 +18,11 @@ func Part1() string {
 	grid.parseGrid(gridString)
 
 	for _, instruction := range parseInstructions(instructionsString) {
-		fmt.Println(grid.gridArray)
-		fmt.Println(instruction)
-		grid.move(instruction)
+		//fmt.Println(grid)
+		//fmt.Println(grid.getItemCount())
+		//fmt.Println("\n")
+		//fmt.Println(instruction)
+		grid.move(instruction, crateMoverModel)
 	}
 	result := grid.getTopItems()
 	return result
@@ -29,6 +32,10 @@ type Instruction struct {
 	nMove int
 	start int
 	end   int
+}
+
+func (i Instruction) String() string {
+	return fmt.Sprintf("Move %v from %v to %v", i.nMove, i.start, i.end)
 }
 
 type Grid struct {
@@ -56,7 +63,18 @@ func (g *Grid) parseGridLine(gridLine string) {
 	}
 }
 
-func (g *Grid) move(i Instruction) {
+func (g *Grid) move(i Instruction, crateMoverModel int) {
+	switch crateMoverModel {
+	case 9000:
+		g.move9000(i)
+	case 9001:
+		g.move9001(i)
+	default:
+		log.Fatal("No such model")
+	}
+}
+
+func (g *Grid) move9000(i Instruction) {
 	var item string
 	for m := 0; m < i.nMove; m++ {
 		// get item
@@ -70,12 +88,75 @@ func (g *Grid) move(i Instruction) {
 	}
 }
 
+func (g *Grid) move9001(i Instruction) {
+	itemStack := make([]string, i.nMove)
+	copy(itemStack, g.gridArray[i.start-1][:i.nMove])
+
+	newStartStack := make([]string, len(g.gridArray[i.start-1])-i.nMove)
+	copy(newStartStack, g.gridArray[i.start-1][i.nMove:])
+	g.gridArray[i.start-1] = newStartStack
+
+	newEndStack := make([]string, len(g.gridArray[i.end-1])+i.nMove)
+	copy(newEndStack, append(itemStack, g.gridArray[i.end-1]...))
+	g.gridArray[i.end-1] = newEndStack
+}
+
 func (g *Grid) getTopItems() string {
 	topItems := ""
 	for col := 0; col < len(g.gridArray); col++ {
 		topItems += g.gridArray[col][0]
 	}
 	return topItems
+}
+
+func (g *Grid) getItemCount() map[string]int {
+	nItems := make(map[string]int)
+	for _, stack := range g.gridArray {
+		for _, item := range stack {
+			_, ok := nItems[item]
+			if ok {
+				nItems[item] += 1
+			} else {
+				nItems[item] = 1
+			}
+		}
+	}
+	return nItems
+}
+
+func (g *Grid) getMaxHeight() int {
+	heightList := utils.SliceMap[[]string, int](g.gridArray, func(i []string) int {
+		return len(i)
+	})
+	maxHeight := utils.MaxInts(heightList)
+	return maxHeight
+}
+
+func (g *Grid) String() string {
+	nCol := len(g.gridArray)
+	repr := ""
+
+	var newLine string
+	var value string
+	maxHeight := g.getMaxHeight()
+	for h := maxHeight; h >= 0; h-- {
+		newLine = ""
+		for i := 0; i < nCol; i++ {
+			if len(g.gridArray[i]) > h {
+				value = g.gridArray[i][len(g.gridArray[i])-h-1]
+				newLine += " " + value + " "
+			} else {
+				newLine += "   "
+			}
+		}
+		repr += newLine + "\n"
+	}
+
+	for i := 0; i < nCol; i++ {
+		repr += fmt.Sprintf(" %v ", i+1)
+	}
+
+	return repr
 }
 
 func parseInstructions(instructionString string) []Instruction {
