@@ -14,3 +14,11 @@ func ReadDataLineByLine(filepath string) *bufio.Scanner {
 	scanner := bufio.NewScanner(f)
 	return scanner
 }
+
+func ReadEntireFile(filepath string) string {
+	f, err := os.ReadFile(filepath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return string(f)
+}
