@@ -2,21 +2,18 @@ package day4
 
 import (
 	"AoC22/utils"
+	"fmt"
 	"log"
 	"strconv"
 	"strings"
 )
 
-type Interval struct {
-	lower int
-	upper int
-}
+func Day4(part int) int {
+	if !(part == 1 || part == 2) {
+		log.Fatal("Wrong Arguments")
+	}
+	conditionFunc := getConditionFunc(part)
 
-func (i *Interval) contains(other Interval) bool {
-	return i.lower <= other.lower && i.upper >= other.upper
-}
-
-func Part1() int {
 	scanner := utils.ReadDataLineByLine("day4/input")
 	nOverlap := 0
 	for scanner.Scan() {
@@ -24,15 +21,33 @@ func Part1() int {
 		assignments := strings.Split(line, ",")
 		ass1 := readAssignment(assignments[0])
 		ass2 := readAssignment(assignments[1])
-		overlap := ass1.contains(ass2) || ass2.contains(ass1)
+		overlap := conditionFunc(ass1, ass2)
 		if overlap {
 			nOverlap += 1
+		} else {
+			fmt.Println(line, overlap)
 		}
 	}
 	return nOverlap
 }
 
-func readAssignment(s string) Interval {
+func getConditionFunc(part int) func(utils.Interval, utils.Interval) bool {
+	if part == 1 {
+		return part1Condition
+	} else {
+		return part2Condition
+	}
+}
+
+func part1Condition(ass1 utils.Interval, ass2 utils.Interval) bool {
+	return ass1.Contains(ass2) || ass2.Contains(ass1)
+}
+
+func part2Condition(ass1 utils.Interval, ass2 utils.Interval) bool {
+	return ass1.Overlaps(ass2)
+}
+
+func readAssignment(s string) utils.Interval {
 	assignment := strings.Split(s, "-")
 	lower, err := strconv.Atoi(assignment[0])
 	if err != nil {
@@ -42,5 +57,5 @@ func readAssignment(s string) Interval {
 	if err != nil {
 		log.Fatal("Error reading upper assignment bound")
 	}
-	return Interval{lower: lower, upper: upper}
+	return utils.Interval{Lower: lower, Upper: upper}
 }
